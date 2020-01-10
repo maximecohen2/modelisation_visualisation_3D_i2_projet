@@ -7,9 +7,6 @@
 </head>
 <body>
 
-<div id="info">
-    <a href="http://threejs.org" target="_blank" rel="noopener">three.js</a> vr - dragging
-</div>
 
 <script src="js/HelioWebXRPolyfill.js"></script>
 
@@ -28,19 +25,24 @@
         "images/background/6.jpg"
     ];
 
-    var sunMaterial = new THREE.MeshStandardMaterial();
-    var mercuryMaterial = new THREE.MeshStandardMaterial();
-    var venusMaterial = new THREE.MeshStandardMaterial();
-    var earthMaterial = new THREE.MeshStandardMaterial();
-    var earthCloudMaterial = new THREE.MeshStandardMaterial();
-    var moonMaterial = new THREE.MeshStandardMaterial();
-    var marsMaterial = new THREE.MeshStandardMaterial();
-    var jupiterMaterial = new THREE.MeshStandardMaterial();
-    var saturnMaterial = new THREE.MeshStandardMaterial();
-    var saturnRingsMaterial = new THREE.MeshStandardMaterial();
-    var uranusMaterial = new THREE.MeshStandardMaterial();
-    var uranusRingsMaterial = new THREE.MeshStandardMaterial();
-    var neptuenMaterial = new THREE.MeshStandardMaterial();
+    var textures = {
+        'sun': "images/sun_color.jpg",
+        'mercury': "images/mercury_color.jpg",
+        'venus': "images/venus_color.jpg",
+        'earth': "images/earth_color.jpg",
+        'earthCloud': "images/earth_cloud_color.jpg",
+        'moon': "images/moon_color.jpg",
+        'mars': "images/mars_color.jpg",
+        'jupiter': "images/jupiter_color.jpg",
+        'saturn': "images/saturn_color.jpg",
+        'saturnRings': "images/saturn_rings_color.jpg",
+        'uranus': "images/uranus_color.jpg",
+        'uranusRings': "images/uranus_rings_color.jpg",
+        'neptune': "images/neptune_color.jpg"
+    };
+
+    var textureLoader = new THREE.TextureLoader();
+    var cubeTextureLoader =  new THREE.CubeTextureLoader();
 
     var container;
     var camera, scene, renderer;
@@ -183,26 +185,78 @@
         scene = new THREE.Scene();
         scene.background = cubeTextureLoader.load(backgroundTextures);
 
-        sphereModel = new THREE.SphereGeometry(.5, 32, 32);
+        camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 10 );
+        camera.position.set( 0, 1.6, 3 );
 
+        controls = new OrbitControls( camera, container );
+        controls.target.set( 0, 1.6, 0 );
+        controls.update();
 
+        let sphereModel = new THREE.SphereGeometry(.5, 32, 32);
+        let ringModel = new THREE.TorusGeometry( 18, 1.9, 2, 121);
 
-        // Set Materials
-        sunTexture = textureLoader.load("images/");
-        mercuryTexture = textureLoader.load("images/");
-        venusTexture = textureLoader.load("images/");
-        earthTexture = textureLoader.load("images/");
-        earthCloudTexture = textureLoader.load("images/");
-        moonTexture = textureLoader.load("images/");
-        marsTexture = textureLoader.load("images/");
-        jupiterTexture = textureLoader.load("images/");
-        saturnTexture = textureLoader.load("images/");
-        saturnRingsTexture = textureLoader.load("images/");
-        uranusTexture = textureLoader.load("images/");
-        uranusRingsTexture = textureLoader.load("images/");
-        neptuenTexture = textureLoader.load("images/");
+        // Load Textures
+        let texturesLoaded = {};
+        for (let [key, value] of Object.entries(textures)) {
+            texturesLoaded[key] = textureLoader.load(value);
+        }
+
+        // Create Materials
+        let materials = {};
+        for (let [key, value] of Object.entries(textures)) {
+            materials[key] = new THREE.MeshStandardMaterial();
+        }
+
+        // Create Mesh and set Material
+        let meshs = {};
+        for (let [key, value] of Object.entries(textures)) {
+            if (key.includes("Rings"))
+                meshs[key] = new THREE.Mesh(ringModel, materials[key]);
+            else
+                meshs[key] = new THREE.Mesh(sphereModel, materials[key]);
+        }
+
+        group = new THREE.Group();
+        scene.add( group );
 
         //
+
+        renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.shadowMap.enabled = true;
+        renderer.xr.enabled = true;
+        container.appendChild( renderer.domElement );
+
+        document.body.appendChild( VRButton.createButton( renderer ) );
+
+        // controllers
+
+        controller1 = renderer.xr.getController( 0 );
+        controller1.addEventListener( 'selectstart', onSelectStart );
+        controller1.addEventListener( 'selectend', onSelectEnd );
+        scene.add( controller1 );
+
+        controller2 = renderer.xr.getController( 1 );
+        controller2.addEventListener( 'selectstart', onSelectStart );
+        controller2.addEventListener( 'selectend', onSelectEnd );
+        scene.add( controller2 );
+
+        //
+
+        var geometry = new THREE.BufferGeometry().setFromPoints( [ new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, - 1 ) ] );
+
+        var line = new THREE.Line( geometry );
+        line.name = 'line';
+        line.scale.z = 5;
+
+        controller1.add( line.clone() );
+        controller2.add( line.clone() );
+
+        raycaster = new THREE.Raycaster();
+
+        // Set Event Resize Screen
 
         window.addEventListener( 'resize', onWindowResize, false );
     }
