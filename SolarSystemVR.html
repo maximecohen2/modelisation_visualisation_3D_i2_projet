@@ -15,31 +15,7 @@
     import * as THREE from './js/three.module.js';
     import { OrbitControls } from './js/OrbitControls.js';
     import { VRButton } from './js/VRButton.js';
-
-    var backgroundTextures = [
-        "images/background/1.jpg",
-        "images/background/2.jpg",
-        "images/background/3.jpg",
-        "images/background/4.jpg",
-        "images/background/5.jpg",
-        "images/background/6.jpg"
-    ];
-
-    var textures = {
-        'sun': "images/sun_color.jpg",
-        'mercury': "images/mercury_color.jpg",
-        'venus': "images/venus_color.jpg",
-        'earth': "images/earth_color.jpg",
-        'earthCloud': "images/earth_cloud_color.jpg",
-        'moon': "images/moon_color.jpg",
-        'mars': "images/mars_color.jpg",
-        'jupiter': "images/jupiter_color.jpg",
-        'saturn': "images/saturn_color.jpg",
-        'saturnRings': "images/saturn_rings_color.jpg",
-        'uranus': "images/uranus_color.jpg",
-        'uranusRings': "images/uranus_rings_color.jpg",
-        'neptune': "images/neptune_color.jpg"
-    };
+    import { data, backgroundTextures } from './js/data.js';
 
     var textureLoader = new THREE.TextureLoader();
     var cubeTextureLoader =  new THREE.CubeTextureLoader();
@@ -192,28 +168,28 @@
         controls.target.set( 0, 1.6, 0 );
         controls.update();
 
-        let sphereModel = new THREE.SphereGeometry(.5, 32, 32);
-        let ringModel = new THREE.TorusGeometry( 18, 1.9, 2, 121);
+        let sphereGeometry = new THREE.SphereGeometry(.5, 32, 32);
+        let ringGeometry = new THREE.TorusGeometry( 18, 1.9, 2, 121);
 
         // Load Textures
         let texturesLoaded = {};
-        for (let [key, value] of Object.entries(textures)) {
-            texturesLoaded[key] = textureLoader.load(value);
+        for (let [key, value] of Object.entries(data)) {
+            texturesLoaded[key] = textureLoader.load(value[0]);
         }
 
-        // Create Materials
+        // Create Materials and set Textures
         let materials = {};
-        for (let [key, value] of Object.entries(textures)) {
+        for (let key of Object.keys(data)) {
             materials[key] = new THREE.MeshStandardMaterial();
         }
 
         // Create Mesh and set Material
         let meshs = {};
-        for (let [key, value] of Object.entries(textures)) {
+        for (let key of Object.keys(data)) {
             if (key.includes("Rings"))
-                meshs[key] = new THREE.Mesh(ringModel, materials[key]);
+                meshs[key] = new THREE.Mesh(ringGeometry, materials[key]);
             else
-                meshs[key] = new THREE.Mesh(sphereModel, materials[key]);
+                meshs[key] = new THREE.Mesh(sphereGeometry, materials[key]);
         }
 
         group = new THREE.Group();
