@@ -171,26 +171,25 @@
         let sphereGeometry = new THREE.SphereGeometry(.5, 32, 32);
         let ringGeometry = new THREE.TorusGeometry( 18, 1.9, 2, 121);
 
-        // Load Textures
         let texturesLoaded = {};
-        for (let [key, value] of Object.entries(data)) {
-            texturesLoaded[key] = textureLoader.load(value[0]);
-        }
-
-        // Create Materials and set Textures
         let materials = {};
-        for (let key of Object.keys(data)) {
+        let meshs = {};
+
+        for (let [key, value] of Object.entries(data)) {
+
+            // Load Textures from data
+            texturesLoaded[key] = textureLoader.load(value[0]);
+
+            // Create Materials for each objects in data
             materials[key] = new THREE.MeshStandardMaterial();
+
+            // Generate mesh with materials
+            if (value['mesh'] === "sphere")
+                meshs[key] = new THREE.Mesh(sphereGeometry, materials[key]);
+            else
+                meshs[key] = new THREE.Mesh(ringGeometry, materials[key]);
         }
 
-        // Create Mesh and set Material
-        let meshs = {};
-        for (let key of Object.keys(data)) {
-            if (key.includes("Rings"))
-                meshs[key] = new THREE.Mesh(ringGeometry, materials[key]);
-            else
-                meshs[key] = new THREE.Mesh(sphereGeometry, materials[key]);
-        }
 
         group = new THREE.Group();
         scene.add( group );
