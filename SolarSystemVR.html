@@ -15,143 +15,47 @@
     import * as THREE from './js/three.module.js';
     import { OrbitControls } from './js/OrbitControls.js';
     import { VRButton } from './js/VRButton.js';
-    import { data, backgroundTextures } from './js/data.js';
+    import { data, backgroundTextures, mainObjectName } from './js/data.js';
 
-    var textureLoader = new THREE.TextureLoader();
-    var cubeTextureLoader =  new THREE.CubeTextureLoader();
+    let textureLoader = new THREE.TextureLoader();
+    let cubeTextureLoader =  new THREE.CubeTextureLoader();
 
-    var container;
-    var camera, scene, renderer;
-    var controller1, controller2;
+    let container;
+    let camera, scene, renderer;
+    let controller1, controller2;
 
-    var raycaster, intersected = [];
-    var tempMatrix = new THREE.Matrix4();
+    let raycaster, intersected = [];
+    let tempMatrix = new THREE.Matrix4();
 
-    var controls, group;
+    let controls, group;
+
+    //
+
+    var curve = new THREE.CubicBezierCurve3(
+        new THREE.Vector3( 0,  0, 15),
+        new THREE.Vector3( 90, 0, 15),
+        new THREE.Vector3( 90, 0, 15),
+        new THREE.Vector3( 0, 0, 15)
+
+    );
+
+    var points = curve.getPoints(10000);
+    var geometryCurve = new THREE.BufferGeometry().setFromPoints(points);
+    var material = new THREE.LineBasicMaterial();
+    var curveObject = new THREE.Line(geometryCurve, material);
+
+    var sphere = new THREE.Mesh(new THREE.SphereGeometry());
+
+
+
+    /* ---------------------- curve  ----------------------*/
+
+    var vitesse = 0.5;
+
+    var start = null;
 
     init();
-    animate();
-
-    /*
-    function init() {
-
-        container = document.createElement( 'div' );
-        document.body.appendChild( container );
-
-        scene = new THREE.Scene();
-        scene.background = new THREE.Color( 0x808080 );
-
-        camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 10 );
-        camera.position.set( 0, 1.6, 3 );
-
-        controls = new OrbitControls( camera, container );
-        controls.target.set( 0, 1.6, 0 );
-        controls.update();
-
-        var geometry = new THREE.PlaneBufferGeometry( 4, 4 );
-        var material = new THREE.MeshStandardMaterial( {
-            color: 0xeeeeee,
-            roughness: 1.0,
-            metalness: 0.0
-        } );
-        var floor = new THREE.Mesh( geometry, material );
-        floor.rotation.x = - Math.PI / 2;
-        floor.receiveShadow = true;
-        scene.add( floor );
-
-        scene.add( new THREE.HemisphereLight( 0x808080, 0x606060 ) );
-
-        var light = new THREE.DirectionalLight( 0xffffff );
-        light.position.set( 0, 6, 0 );
-        light.castShadow = true;
-        light.shadow.camera.top = 2;
-        light.shadow.camera.bottom = - 2;
-        light.shadow.camera.right = 2;
-        light.shadow.camera.left = - 2;
-        light.shadow.mapSize.set( 4096, 4096 );
-        scene.add( light );
-
-        group = new THREE.Group();
-        scene.add( group );
-
-        var geometries = [
-            new THREE.BoxBufferGeometry( 0.2, 0.2, 0.2 ),
-            new THREE.ConeBufferGeometry( 0.2, 0.2, 64 ),
-            new THREE.CylinderBufferGeometry( 0.2, 0.2, 0.2, 64 ),
-            new THREE.IcosahedronBufferGeometry( 0.2, 3 ),
-            new THREE.TorusBufferGeometry( 0.2, 0.04, 64, 32 )
-        ];
-
-        for ( var i = 0; i < 50; i ++ ) {
-
-            var geometry = geometries[ Math.floor( Math.random() * geometries.length ) ];
-            var material = new THREE.MeshStandardMaterial( {
-                color: Math.random() * 0xffffff,
-                roughness: 0.7,
-                metalness: 0.0
-            } );
-
-            var object = new THREE.Mesh( geometry, material );
-
-            object.position.x = Math.random() * 4 - 2;
-            object.position.y = Math.random() * 2;
-            object.position.z = Math.random() * 4 - 2;
-
-            object.rotation.x = Math.random() * 2 * Math.PI;
-            object.rotation.y = Math.random() * 2 * Math.PI;
-            object.rotation.z = Math.random() * 2 * Math.PI;
-
-            object.scale.setScalar( Math.random() + 0.5 );
-
-            object.castShadow = true;
-            object.receiveShadow = true;
-
-            group.add( object );
-
-        }
-
-        //
-
-        renderer = new THREE.WebGLRenderer( { antialias: true } );
-        renderer.setPixelRatio( window.devicePixelRatio );
-        renderer.setSize( window.innerWidth, window.innerHeight );
-        renderer.outputEncoding = THREE.sRGBEncoding;
-        renderer.shadowMap.enabled = true;
-        renderer.xr.enabled = true;
-        container.appendChild( renderer.domElement );
-
-        document.body.appendChild( VRButton.createButton( renderer ) );
-
-        // controllers
-
-        controller1 = renderer.xr.getController( 0 );
-        controller1.addEventListener( 'selectstart', onSelectStart );
-        controller1.addEventListener( 'selectend', onSelectEnd );
-        scene.add( controller1 );
-
-        controller2 = renderer.xr.getController( 1 );
-        controller2.addEventListener( 'selectstart', onSelectStart );
-        controller2.addEventListener( 'selectend', onSelectEnd );
-        scene.add( controller2 );
-
-        //
-
-        var geometry = new THREE.BufferGeometry().setFromPoints( [ new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, - 1 ) ] );
-
-        var line = new THREE.Line( geometry );
-        line.name = 'line';
-        line.scale.z = 5;
-
-        controller1.add( line.clone() );
-        controller2.add( line.clone() );
-
-        raycaster = new THREE.Raycaster();
-
-        //
-
-        window.addEventListener( 'resize', onWindowResize, false );
-
-    }*/
+    requestAnimationFrame(animate);
 
     function init() {
 
@@ -161,38 +65,120 @@
         scene = new THREE.Scene();
         scene.background = cubeTextureLoader.load(backgroundTextures);
 
-        camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 10 );
+        camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 100 );
         camera.position.set( 0, 1.6, 3 );
 
         controls = new OrbitControls( camera, container );
         controls.target.set( 0, 1.6, 0 );
         controls.update();
 
-        let sphereGeometry = new THREE.SphereGeometry(.5, 32, 32);
-        let ringGeometry = new THREE.TorusGeometry( 18, 1.9, 2, 121);
+        var ambientLight = new THREE.AmbientLight(0xffffff, .1);
+        scene.add(ambientLight);
 
-        let texturesLoaded = {};
-        let materials = {};
-        let meshs = {};
+        // solar light
+        var light = new THREE.PointLight( 0xffffff, 2, 1000);
+        light.position.set( 0, 0, 0);
+        scene.add( light );
+        var light2 = new THREE.PointLight( 0xffffff, 2, 20);
+        light2.position.set( -15, 0, 0);
+        scene.add( light2 );
+        var light22 = new THREE.PointLight( 0xffffff, 2, 20);
+        light22.position.set( 15, 0, 0);
+        scene.add( light22 );
+        var light3 = new THREE.PointLight( 0xffffff, 2, 20);
+        light3.position.set(0, 0, 15);
+        scene.add( light3 );
+        var light4 = new THREE.PointLight( 0xffffff, 2, 20);
+        light4.position.set( 0, 0,-15);
+        scene.add( light4 );
+        var light5 = new THREE.PointLight( 0xffffff, 2, 20);
+        light5.position.set(0, -15, 0);
+        scene.add( light5 );
+        var light6 = new THREE.PointLight( 0xffffff, 2, 20);
+        light6.position.set(0, 15, 0);
+        scene.add( light6 );
+
+        //
+
+        let sphereGeometry = new THREE.SphereGeometry(.5, 32, 32);
+        let ringGeometry = new THREE.TorusGeometry( .5, .2, 2, 121);
+
+        let objects = {};
+        let textureLoadedCol = 'textureLoaded';
+        let materialCol = 'material';
+        let meshCol = 'mesh';
+        let groupCol = 'group';
 
         for (let [key, value] of Object.entries(data)) {
 
-            // Load Textures from data
-            texturesLoaded[key] = textureLoader.load(value[0]);
+            let object = {};
+            objects[key] = object;
 
-            // Create Materials for each objects in data
-            materials[key] = new THREE.MeshStandardMaterial();
+            // Create group
+            object[groupCol] = new THREE.Group();
 
-            // Generate mesh with materials
-            if (value['mesh'] === "sphere")
-                meshs[key] = new THREE.Mesh(sphereGeometry, materials[key]);
-            else
-                meshs[key] = new THREE.Mesh(ringGeometry, materials[key]);
+            if ('color' in value)
+            {
+                // Load Textures from data
+                object[textureLoadedCol] = textureLoader.load(value['color']);
+
+                // Create Materials for each objects in data
+                object[materialCol] = new THREE.MeshStandardMaterial();
+
+                // Generate mesh with materials
+                if (value['mesh'] === "sphere")
+                {
+                    object[meshCol] = new THREE.Mesh(sphereGeometry, object[materialCol]);
+                }
+                else
+                {
+                    object[meshCol] = new THREE.Mesh(ringGeometry, object[materialCol]);
+                    object[meshCol].rotateX(THREE.Math.degToRad(90));
+                }
+
+                // Set Material to Mesh
+                object[meshCol].material.map = object[textureLoadedCol];
+
+                // set Mesh size
+                if ('size' in value)
+                {
+                    object[meshCol].scale.set(value['size'], value['size'], value['size']);
+                }
+
+                // Add Mesh to the group
+                object[groupCol].add(object[meshCol]);
+            }
+
+            if ('parent' in value)
+            {
+                // Add object group to Parent group
+                objects[value['parent']][groupCol].add(object[groupCol]);
+            }
+
+            if ('distance' in value)
+            {
+                object[groupCol].position.x = value['distance'];
+            }
+
         }
-
+        console.log(objects);
 
         group = new THREE.Group();
         scene.add( group );
+
+        group.add(objects[mainObjectName][groupCol]);
+
+
+        //
+
+        curveObject.visible = false;
+        scene.add(curveObject);
+
+        scene.add(sphere);
+
+        camera.position.z = 30;
+        camera.position.y = 5;
+
 
         //
 
@@ -220,9 +206,9 @@
 
         //
 
-        var geometry = new THREE.BufferGeometry().setFromPoints( [ new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, - 1 ) ] );
+        let geometry = new THREE.BufferGeometry().setFromPoints( [ new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, - 1 ) ] );
 
-        var line = new THREE.Line( geometry );
+        let line = new THREE.Line( geometry );
         line.name = 'line';
         line.scale.z = 5;
 
@@ -247,17 +233,17 @@
 
     function onSelectStart( event ) {
 
-        var controller = event.target;
+        let controller = event.target;
 
-        var intersections = getIntersections( controller );
+        let intersections = getIntersections( controller );
 
         if ( intersections.length > 0 ) {
 
-            var intersection = intersections[ 0 ];
+            let intersection = intersections[ 0 ];
 
             tempMatrix.getInverse( controller.matrixWorld );
 
-            var object = intersection.object;
+            let object = intersection.object;
             object.matrix.premultiply( tempMatrix );
             object.matrix.decompose( object.position, object.quaternion, object.scale );
             object.material.emissive.b = 1;
@@ -271,11 +257,11 @@
 
     function onSelectEnd( event ) {
 
-        var controller = event.target;
+        let controller = event.target;
 
         if ( controller.userData.selected !== undefined ) {
 
-            var object = controller.userData.selected;
+            let object = controller.userData.selected;
             object.matrix.premultiply( controller.matrixWorld );
             object.matrix.decompose( object.position, object.quaternion, object.scale );
             object.material.emissive.b = 0;
@@ -305,14 +291,14 @@
 
         if ( controller.userData.selected !== undefined ) return;
 
-        var line = controller.getObjectByName( 'line' );
-        var intersections = getIntersections( controller );
+        let line = controller.getObjectByName( 'line' );
+        let intersections = getIntersections( controller );
 
         if ( intersections.length > 0 ) {
 
-            var intersection = intersections[ 0 ];
+            let intersection = intersections[ 0 ];
 
-            var object = intersection.object;
+            let object = intersection.object;
             object.material.emissive.r = 1;
             intersected.push( object );
 
@@ -330,7 +316,7 @@
 
         while ( intersected.length ) {
 
-            var object = intersected.pop();
+            let object = intersected.pop();
             object.material.emissive.r = 0;
 
         }
@@ -339,8 +325,15 @@
 
     //
 
-    function animate() {
+    function animate(t) {
 
+        if (start == null) {
+            start = t;
+        }
+        var delai = t - start;
+
+        curve.getPoint((delai * vitesse * .0001) % 1, camera.position);
+        requestAnimationFrame(animate);
         renderer.setAnimationLoop( render );
 
     }
