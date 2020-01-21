@@ -78,6 +78,7 @@ let data = {
         parent: 'saturn',
         mesh: 'ring',
         distance: 0,
+        size: 4.4,
     },
     'uranus': {
         color: "images/uranus_color.jpg",
@@ -91,6 +92,7 @@ let data = {
         parent: 'uranus',
         mesh: 'ring',
         distance: 0,
+        size: 3.2,
     },
     'neptune': {
         color: "images/neptune_color.jpg",

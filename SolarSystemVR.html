@@ -27,7 +27,7 @@
     let raycaster, intersected = [];
     let tempMatrix = new THREE.Matrix4();
 
-    let controls, group;
+    let controls, group, user;
 
     //
 
@@ -133,7 +133,7 @@
                 else
                 {
                     object[meshCol] = new THREE.Mesh(ringGeometry, object[materialCol]);
-                    object[meshCol].rotateX(THREE.Math.degToRad(90));
+                    object[meshCol].rotateX(THREE.Math.degToRad(70));
                 }
 
                 // Set Material to Mesh
@@ -176,8 +176,13 @@
 
         scene.add(sphere);
 
-        camera.position.z = 30;
-        camera.position.y = 5;
+        user = new THREE.Group();
+        user.add(camera);
+        user.position.z = 30;
+        user.position.y = 5;
+        scene.add(user);
+        //camera.position.z = 30;
+        //camera.position.y = 5;
 
 
         //
@@ -332,7 +337,7 @@
         }
         var delai = t - start;
 
-        curve.getPoint((delai * vitesse * .0001) % 1, camera.position);
+        curve.getPoint((delai * vitesse * .0001) % 1, user.position);
         requestAnimationFrame(animate);
         renderer.setAnimationLoop( render );
 
